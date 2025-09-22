@@ -1,0 +1,57 @@
+import json
+import boto3
+from datetime import datetime
+
+# Conexión a DynamoDB
+dynamodb = boto3.resource("dynamodb")
+tabla = dynamodb.Table("Reportes")
+
+def lambda_handler(event, context):
+    try:
+        # Parsear el body que llega en JSON
+        body = json.loads(event["body"])
+        
+        reporteId = body.get("reporteId")     # ID del reporte
+        nombre = body.get("nombre")           # Nombre persona
+        correo = body.get("correo")           # Email 
+        telefono = body.get("telefono")       # Teléfono
+        categoria = body.get("categoria")     # Problema
+        mensaje = body.get("mensaje")         # Descripción
+        prioridad = body.get("prioridad")     # Baja, Media, Alta
+        fecha = datetime.utcnow().isoformat() # Fecha automática
+
+        # Guardar en DynamoDB
+        tabla.put_item(
+            Item={
+                "reporteId": reporteId,
+                "nombre": nombre,
+                "correo": correo,
+                "telefono": telefono,
+                "categoria": categoria,
+                "mensaje": mensaje,
+                "prioridad": prioridad,
+                "fecha": fecha
+            }
+        )
+
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "status": "ok",
+                "mensaje": "Reporte guardado correctamente",
+                "reporteId": reporteId,
+                "nombre": nombre,
+                "categoria": categoria,
+                "prioridad": prioridad
+            })
+        }
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "body": json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+        }
+
+
